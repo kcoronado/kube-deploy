@@ -25,14 +25,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-
-	clusterv1 "k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api/pkg/client/clientset_generated/clientset"
-	"k8s.io/kube-deploy/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
-	listers "k8s.io/kube-deploy/cluster-api/pkg/client/listers_generated/cluster/v1alpha1"
-	cfg "k8s.io/kube-deploy/cluster-api/pkg/controller/config"
-	"k8s.io/kube-deploy/cluster-api/pkg/controller/sharedinformers"
-	"k8s.io/kube-deploy/cluster-api/util"
+	clusterv1 "k8s.io/kube-deploy/ext-apiserver/pkg/apis/cluster/v1alpha1"
+	"k8s.io/kube-deploy/ext-apiserver/pkg/client/clientset_generated/clientset"
+	"k8s.io/kube-deploy/ext-apiserver/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
+	listers "k8s.io/kube-deploy/ext-apiserver/pkg/client/listers_generated/cluster/v1alpha1"
+	cfg "k8s.io/kube-deploy/ext-apiserver/pkg/controller/config"
+	"k8s.io/kube-deploy/ext-apiserver/pkg/controller/sharedinformers"
+	"k8s.io/kube-deploy/ext-apiserver/util"
 )
 
 // +controller:group=cluster,version=v1alpha1,kind=Machine,resource=machines
@@ -68,6 +67,11 @@ func (c *MachineControllerImpl) Init(arguments sharedinformers.ControllerInitArg
 	// Create machine actuator.
 	// TODO: Assume default namespace for now. Maybe a separate a controller per namespace?
 	c.machineClient = clientset.ClusterV1alpha1().Machines(corev1.NamespaceDefault)
+	var config *cfg.Configuration = &cfg.ControllerConfig
+	actuator, err := cloud.NewMachineActuator(config.Cloud, config.KubeadmToken, c.machineClient)
+	if err != nil {
+		glog.Fatalf("error creating machine actuator: %v", err)
+	}
 	c.actuator = actuator
 
 	// Start watching for Node resource. It will effectively create a new worker queue, and

@@ -32,6 +32,7 @@ import (
 
 var (
 	kubeadmToken = pflag.String("token", "", "Kubeadm token to use to join new machines")
+	installationConfigPath = pflag.String("config", "", "path to installation config file")
 )
 
 func init() {
@@ -54,7 +55,7 @@ func main() {
 		glog.Fatalf("Could not create client for talking to the apiserver: %v", err)
 	}
 
-	actuator, err := google.NewMachineActuator(*kubeadmToken, client.ClusterV1alpha1().Machines(corev1.NamespaceDefault))
+	actuator, err := google.NewMachineActuator(*kubeadmToken, client.ClusterV1alpha1().Machines(corev1.NamespaceDefault), *installationConfigPath)
 	if err != nil {
 		glog.Fatalf("Could not create Google machine actuator: %v", err)
 	}

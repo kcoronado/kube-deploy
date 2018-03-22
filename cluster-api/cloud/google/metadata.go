@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"text/template"
 
-	"k8s.io/kube-deploy/ext-apiserver/cloud/google/installation"
-	clusterv1 "k8s.io/kube-deploy/ext-apiserver/pkg/apis/cluster/v1alpha1"
+	"k8s.io/kube-deploy/cluster-api/cloud/google/installation"
+	clusterv1 "k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
 )
 
 type metadataParams struct {
@@ -93,7 +93,7 @@ TOKEN={{ .Token }}
 PORT=443
 MACHINE={{ .Machine.ObjectMeta.Name }}
 CONTROL_PLANE_VERSION={{ .Machine.Spec.Versions.ControlPlane }}
-CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.DNSDomain }}
+CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.ServiceDomain }}
 POD_CIDR={{ .PodCIDR }}
 SERVICE_CIDER={{ .ServiceCIDR }}
 
@@ -111,7 +111,7 @@ KUBELET_VERSION={{ .Machine.Spec.Versions.Kubelet }}
 TOKEN={{ .Token }}
 MASTER={{ .MasterEndpoint }}
 MACHINE={{ .Machine.ObjectMeta.Name }}
-CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.DNSDomain }}
+CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.ServiceDomain }}
 POD_CIDR={{ .PodCIDR }}
 SERVICE_CIDER={{ .ServiceCIDR }}
 `

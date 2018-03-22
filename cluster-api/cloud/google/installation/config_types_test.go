@@ -2,8 +2,8 @@ package installation
 
 import (
 	"io"
-	"k8s.io/kube-deploy/ext-apiserver/pkg/apis/cluster/common"
-	"k8s.io/kube-deploy/ext-apiserver/pkg/apis/cluster/v1alpha1"
+	"k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/common"
+	"k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
 	"reflect"
 	"strings"
 	"testing"

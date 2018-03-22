@@ -43,6 +43,7 @@ import (
 	clusterv1 "k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
 	client "k8s.io/kube-deploy/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/util"
+	"k8s.io/kube-deploy/cluster-api/cloud/google/installation"
 )
 
 const (
@@ -67,6 +68,7 @@ type GCEClient struct {
 	sshCreds      SshCreds
 	machineClient client.MachineInterface
 	configWatch   *installation.ConfigWatch
+
 }
 
 const (
@@ -141,6 +143,8 @@ func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initia
 		return err
 	}
 
+	// TODO create configmap for config installation yaml (use a static name for now)
+
 	if err := CreateApiServerAndController(gce.kubeadmToken); err != nil {
 		return err
 	}
@@ -159,8 +163,8 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 	}
 
 	var metadata map[string]string
-	if cluster.Spec.ClusterNetwork.DNSDomain == "" {
-		return errors.New("invalid cluster configuration: missing Cluster.Spec.ClusterNetwork.DNSDomain")
+	if cluster.Spec.ClusterNetwork.ServiceDomain == "" {
+		return errors.New("invalid cluster configuration: missing Cluster.Spec.ClusterNetwork.ServiceDomain")
 	}
 	if getSubnet(cluster.Spec.ClusterNetwork.Pods) == "" {
 		return errors.New("invalid cluster configuration: missing Cluster.Spec.ClusterNetwork.Pods")
@@ -190,14 +194,14 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 	}
 	imagePath := gce.getImagePath(image, config.Project)
 
+	installationMetadata, err := installationConfig.GetMetadata(configParams)
+	if err != nil {
+		return err
+	}
 	if util.IsMaster(machine) {
 		if machine.Spec.Versions.ControlPlane == "" {
 			return gce.handleMachineError(machine, apierrors.InvalidMachineConfiguration(
 				"invalid master configuration: missing Machine.Spec.Versions.ControlPlane"))
-		}
-		installationMetadata, err := installationConfig.GetMetadata(configParams)
-		if err != nil {
-			return err
 		}
 		metadata, err = masterMetadata(
 			metadataParams{
@@ -221,6 +225,8 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 				Token:   gce.kubeadmToken,
 				Cluster: cluster,
 				Machine: machine,
+				Project:  config.Project,
+				Metadata: installationMetadata,
 			},
 		)
 		if err != nil {

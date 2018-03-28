@@ -77,6 +77,14 @@ func parseInstallationYaml(reader io.Reader) (*Config, error) {
 	return &Config{infoList}, nil
 }
 
+func (c *Config) GetYaml() (string, error) {
+	bytes, err := yaml.Marshal(c.infoList)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 func (c *Config) GetImage(params *ConfigParams) (string, error) {
 	installationConfig, err := c.matchInstallationConfig(params)
 	if err != nil {

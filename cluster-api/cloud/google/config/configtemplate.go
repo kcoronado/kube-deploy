@@ -139,6 +139,8 @@ spec:
             mountPath: /etc/credentials
           - name: sshkeys
             mountPath: /etc/sshkeys
+          - name: installation
+            mountPath: /etc/installation
         env:
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: /etc/credentials/service-account.json
@@ -147,6 +149,7 @@ spec:
         args:
         - --kubeconfig=/etc/kubernetes/admin.conf
         - --token={{ .Token }}
+        - --config=/etc/installation/installation_configs.yaml
         resources:
           requests:
             cpu: 100m
@@ -171,6 +174,9 @@ spec:
       - name: credentials
         secret:
           secretName: machine-controller-credential
+      - name: installation
+        configMap: 
+          name: installation-configs
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet

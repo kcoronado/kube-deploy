@@ -30,20 +30,23 @@ import (
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
 	"regexp"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	gceconfig "k8s.io/kube-deploy/cluster-api/cloud/google/gceproviderconfig"
 	gceconfigv1 "k8s.io/kube-deploy/cluster-api/cloud/google/gceproviderconfig/v1alpha1"
+	"k8s.io/kube-deploy/cluster-api/cloud/google/installation"
 	apierrors "k8s.io/kube-deploy/cluster-api/errors"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
 	client "k8s.io/kube-deploy/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/util"
-	"k8s.io/kube-deploy/cluster-api/cloud/google/installation"
 )
 
 const (
@@ -68,7 +71,6 @@ type GCEClient struct {
 	sshCreds      SshCreds
 	machineClient client.MachineInterface
 	configWatch   *installation.ConfigWatch
-
 }
 
 const (
@@ -129,7 +131,7 @@ func NewMachineActuator(kubeadmToken string, machineClient client.MachineInterfa
 	}, nil
 }
 
-func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
+func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine, clientSet kubernetes.Clientset) error {
 	if err := gce.CreateMachineControllerServiceAccount(cluster, initialMachines); err != nil {
 		return err
 	}
@@ -143,7 +145,25 @@ func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initia
 		return err
 	}
 
-	// TODO create configmap for config installation yaml (use a static name for now)
+	// Create the configmap so the installation configs can be mounted into the node.
+	config, err := gce.configWatch.Config()
+	if err != nil {
+		return err
+	}
+	yaml, err := config.GetYaml()
+	if err != nil {
+		return err
+	}
+	configMap := corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: "installation-configs"},
+		Data: map[string]string{
+			"installation_configs.yaml": yaml,
+		},
+	}
+	configMaps := clientSet.CoreV1().ConfigMaps(corev1.NamespaceDefault)
+	if _, err := configMaps.Create(&configMap); err != nil {
+		return err
+	}
 
 	if err := CreateApiServerAndController(gce.kubeadmToken); err != nil {
 		return err
@@ -222,9 +242,9 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 		var err error
 		metadata, err = nodeMetadata(
 			metadataParams{
-				Token:   gce.kubeadmToken,
-				Cluster: cluster,
-				Machine: machine,
+				Token:    gce.kubeadmToken,
+				Cluster:  cluster,
+				Machine:  machine,
 				Project:  config.Project,
 				Metadata: installationMetadata,
 			},

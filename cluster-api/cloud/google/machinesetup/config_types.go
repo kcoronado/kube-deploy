@@ -1,4 +1,4 @@
-package installation
+package machinesetup
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ type info struct {
 	// This can either be a full projects path to an image/family,
 	// or just the image name which is in the project.
 	// If it's an image in the project, this field may be
-	// identical to the OS field.
+	// identical to the OS field (see GCEClient.getImagePath()).
 	Image    string   `json:"image"`
 	Metadata Metadata `json:"metadata"`
 }

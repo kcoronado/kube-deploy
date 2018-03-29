@@ -42,7 +42,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	gceconfig "k8s.io/kube-deploy/cluster-api/cloud/google/gceproviderconfig"
 	gceconfigv1 "k8s.io/kube-deploy/cluster-api/cloud/google/gceproviderconfig/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api/cloud/google/installation"
+	"k8s.io/kube-deploy/cluster-api/cloud/google/machinesetup"
 	apierrors "k8s.io/kube-deploy/cluster-api/errors"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
 	client "k8s.io/kube-deploy/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
@@ -70,7 +70,7 @@ type GCEClient struct {
 	kubeadmToken  string
 	sshCreds      SshCreds
 	machineClient client.MachineInterface
-	configWatch   *installation.ConfigWatch
+	configWatch   *machinesetup.ConfigWatch
 }
 
 const (
@@ -109,9 +109,9 @@ func NewMachineActuator(kubeadmToken string, machineClient client.MachineInterfa
 		}
 	}
 
-	var configWatch *installation.ConfigWatch
+	var configWatch *machinesetup.ConfigWatch
 	if configListPath != "" {
-		configWatch, err = installation.NewConfigWatch(configListPath)
+		configWatch, err = machinesetup.NewConfigWatch(configListPath)
 		if err != nil {
 			glog.Errorf("Error creating config watch: %v", err)
 		}
@@ -145,7 +145,7 @@ func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initia
 		return err
 	}
 
-	// Create the configmap so the installation configs can be mounted into the node.
+	// Create the configmap so the machine setup configs can be mounted into the node.
 	config, err := gce.configWatch.Config()
 	if err != nil {
 		return err
@@ -155,9 +155,9 @@ func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initia
 		return err
 	}
 	configMap := corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: "installation-configs"},
+		ObjectMeta: v1.ObjectMeta{Name: "machine-setup"},
 		Data: map[string]string{
-			"installation_configs.yaml": yaml,
+			"machine_setup_configs.yaml": yaml,
 		},
 	}
 	configMaps := clientSet.CoreV1().ConfigMaps(corev1.NamespaceDefault)
@@ -203,7 +203,7 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 	if err != nil {
 		return err
 	}
-	configParams := &installation.ConfigParams{
+	configParams := &machinesetup.ConfigParams{
 		OS:       config.OS,
 		Roles:    machine.Spec.Roles,
 		Versions: machine.Spec.Versions,

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"k8s.io/kube-deploy/cluster-api/cloud/google/installation"
+	"k8s.io/kube-deploy/cluster-api/cloud/google/machinesetup"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/pkg/apis/cluster/v1alpha1"
 )
 
@@ -31,7 +31,7 @@ type metadataParams struct {
 	Machine      *clusterv1.Machine
 	DockerImages []string
 	Project      string
-	Metadata     *installation.Metadata
+	Metadata     *machinesetup.Metadata
 
 	// These fields are set when executing the template if they are necessary.
 	PodCIDR        string

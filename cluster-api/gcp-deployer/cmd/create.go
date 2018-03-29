@@ -27,7 +27,7 @@ import (
 type CreateOptions struct {
 	Cluster      string
 	Machine      string
-	Installation string
+	MachineSetup string
 }
 
 var co = &CreateOptions{}
@@ -47,8 +47,8 @@ var createCmd = &cobra.Command{
 			cmd.Help()
 			os.Exit(1)
 		}
-		if co.Installation == "" {
-			glog.Error("Please provide yaml file for installation configs.")
+		if co.MachineSetup == "" {
+			glog.Error("Please provide yaml file for machine setup configs.")
 			cmd.Help()
 			os.Exit(1)
 		}
@@ -69,14 +69,14 @@ func RunCreate(co *CreateOptions) error {
 		return err
 	}
 
-	d := deploy.NewDeployer(provider, kubeConfig, co.Installation)
+	d := deploy.NewDeployer(provider, kubeConfig, co.MachineSetup)
 
 	return d.CreateCluster(cluster, machines)
 }
 func init() {
 	createCmd.Flags().StringVarP(&co.Cluster, "cluster", "c", "", "cluster yaml file")
 	createCmd.Flags().StringVarP(&co.Machine, "machines", "m", "", "machine yaml file")
-	createCmd.Flags().StringVarP(&co.Installation, "installation", "i", "", "installation configs yaml file")
+	createCmd.Flags().StringVarP(&co.MachineSetup, "setup", "s", "", "machine setup configs yaml file")
 
 	RootCmd.AddCommand(createCmd)
 }

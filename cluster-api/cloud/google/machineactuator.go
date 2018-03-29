@@ -204,7 +204,7 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 		return err
 	}
 	configParams := &installation.ConfigParams{
-		OS:       config.Image,
+		OS:       config.OS,
 		Roles:    machine.Spec.Roles,
 		Versions: machine.Spec.Versions,
 	}

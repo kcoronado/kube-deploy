@@ -291,6 +291,14 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 				Items: []string{"https-server"},
 			},
 			Labels: labels,
+			ServiceAccounts: []*compute.ServiceAccount{
+				{
+					Email: "default",
+					Scopes: []string{
+						"https://www.googleapis.com/auth/cloud-platform",
+					},
+				},
+			},
 		}).Do()
 
 		if err == nil {

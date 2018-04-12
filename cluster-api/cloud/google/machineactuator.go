@@ -261,8 +261,9 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 		}
 
 		op, err := gce.service.Instances.Insert(project, zone, &compute.Instance{
-			Name:        name,
-			MachineType: fmt.Sprintf("zones/%s/machineTypes/%s", zone, config.MachineType),
+			Name:         name,
+			MachineType:  fmt.Sprintf("zones/%s/machineTypes/%s", zone, config.MachineType),
+			CanIpForward: true,
 			NetworkInterfaces: []*compute.NetworkInterface{
 				{
 					Network: "global/networks/default",

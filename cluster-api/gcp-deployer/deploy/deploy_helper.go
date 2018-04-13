@@ -93,15 +93,11 @@ func (d *deployer) createCluster(c *clusterv1.Cluster, machines []*clusterv1.Mac
 	}
 
 	if err := d.waitForClusterResourceReady(); err != nil {
-		fmt.Printf("apiserver never came up: %v\n", err)
-		os.Exit(1)
 		return err
 	}
 
 	c, err = d.client.Clusters(apiv1.NamespaceDefault).Create(c)
 	if err != nil {
-		fmt.Printf("Cluster was never created: %v\n", err)
-		os.Exit(1)
 		return err
 	}
 
@@ -111,14 +107,10 @@ func (d *deployer) createCluster(c *clusterv1.Cluster, machines []*clusterv1.Mac
 			Port: 443,
 		})
 	if _, err := d.client.Clusters(apiv1.NamespaceDefault).UpdateStatus(c); err != nil {
-		fmt.Printf("Cluster API endpoint was never updated: %v\n", err)
-		os.Exit(1)
 		return err
 	}
 
 	if err := d.createMachines(machines); err != nil {
-		fmt.Printf("Machines were never created: %v\n", err)
-		os.Exit(1)
 		return err
 	}
 	return nil

@@ -259,6 +259,10 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 		if gce.machineClient == nil {
 			labels[BootstrapLabelKey] = "true"
 		}
+		tags := []string{"https-server"}
+		if !util.IsMaster(machine) {
+			tags = append(tags, fmt.Sprintf("%s-worker", cluster.Name))
+		}
 
 		op, err := gce.service.Instances.Insert(project, zone, &compute.Instance{
 			Name:         name,
@@ -289,7 +293,7 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 				Items: metadataItems,
 			},
 			Tags: &compute.Tags{
-				Items: []string{"https-server"},
+				Items: tags,
 			},
 			Labels: labels,
 			ServiceAccounts: []*compute.ServiceAccount{
